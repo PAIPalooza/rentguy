@@ -4,20 +4,33 @@ aptPkgs = ["libpq-dev", "build-essential"]
 
 [phases.install]
 cmds = [
-  "cd frontend && npm install",
-  "cd backend && pip install -r requirements.txt"
+  "echo '=== Installing dependencies ==='",
+  "if [ -d \"frontend\" ]; then echo 'Installing frontend dependencies...' && cd frontend && npm install; fi",
+  "if [ -d \"backend\" ]; then echo 'Installing backend dependencies...' && cd backend && pip install -r requirements.txt; fi"
 ]
 
 [phases.build]
 cmds = [
-  "cd frontend && npm run build",
+  "echo '=== Building application ==='",
+  "echo 'Current directory:' && pwd && ls -la",
+  "echo 'Creating /app/static directory...'",
   "mkdir -p /app/static",
-  "cp -r frontend/dist/* /app/static/",
-  "chmod +x backend/start.sh"
+  
+  "if [ -d \"frontend\" ]; then",
+  "  echo 'Building frontend...'",
+  "  cd frontend && npm run build && cp -r dist/* /app/static/ && cd ..",
+  "fi",
+  
+  "echo 'Setting up backend...'",
+  "mkdir -p /app/backend",
+  "echo 'Copying backend files...'",
+  "cp -r backend/* /app/backend/",
+  "echo 'Backend files in /app/backend:' && ls -la /app/backend/",
+  "chmod +x /app/backend/start.sh"
 ]
 
 [start]
-cmd = "sh -c 'cd backend && ./start.sh'"
+cmd = "sh -c 'echo \"=== Starting application ===\" && echo \"Current directory: $(pwd)\" && echo \"Contents: $(ls -la)\" && echo \"Looking for start.sh...\" && find / -name start.sh 2>/dev/null && echo \"Trying to start...\" && cd /app/backend && ./start.sh'"
 
 [variables]
 PYTHONUNBUFFERED = "1"
